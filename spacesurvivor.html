@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VOID STRIKER — Space Survivor</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Exo+2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   VOID STRIKER — CSS DESIGN SYSTEM
+═══════════════════════════════════════════ */
+:root {
+  --c0: #020408;
+  --c1: #050d18;
+  --c2: #0a1628;
+  --neon: #00e5ff;
+  --neon2: #7b2fff;
+  --hot: #ff3d6e;
+  --gold: #ffd234;
+  --green: #00ff88;
+  --dim: rgba(0,229,255,0.12);
+  --dim2: rgba(123,47,255,0.12);
+  --border: rgba(0,229,255,0.18);
+  --border2: rgba(255,255,255,0.06);
+  --nav: 64px;
+  --top: 54px;
+  --r: 10px;
+  --font-display: 'Black Han Sans', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  width:100%; height:100%;
+  background:var(--c0);
+  color:#e8f4ff;
+  font-family:var(--font-body);
+  overflow:hidden;
+  cursor:crosshair;
+}
+
+/* ── NOISE OVERLAY ── */
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9998;
+  opacity:.5;
+}
+
+/* ── SCANLINES ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px);
+  pointer-events:none;
+  z-index:9999;
+}
+
+#app { width:100%; height:100%; display:flex; flex-direction:column; position:relative; }
+
+/* ════════════════════════════════
+   TOP BAR
+════════════════════════════════ */
+#top-bar {
+  height:var(--top);
+  background: linear-gradient(180deg, rgba(2,4,8,0.98) 0%, rgba(5,13,24,0.95) 100%);
+  border-bottom: 1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-around;
+  padding: 0 12px;
+  flex-shrink:0;
+  position:relative;
+  z-index:50;
+}
+#top-bar::before {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  opacity:.4;
+}
+.res-pill {
+  display:flex; align-items:center; gap:6px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border2);
+  border-radius:20px;
+  padding: 6px 14px;
+  font-size:.72rem; font-weight:600;
+  letter-spacing:.5px;
+  transition: border-color .3s;
+  position:relative;
+  overflow:hidden;
+}
+.res-pill::before {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.03));
+}
+.res-pill .r-icon { font-size:1rem; }
+.res-pill .r-val { color:#fff; font-weight:700; min-width:24px; text-align:center; font-family:var(--font-display); }
+.res-pill.keys  { border-color:rgba(0,255,136,.2); }
+.res-pill.gems  { border-color:rgba(0,229,255,.2); }
+.res-pill.gold  { border-color:rgba(255,210,52,.2); }
+
+#admin-btn {
+  position:fixed; top:6px; right:8px;
+  background:none; border:none; font-size:.9rem; cursor:pointer;
+  opacity:.15; z-index:200; transition:.3s;
+}
+#admin-btn:hover { opacity:.8; }
+
+/* ════════════════════════════════
+   SCREENS
+════════════════════════════════ */
+#main {
+  flex:1; position:relative; overflow:hidden;
+}
+
+.screen {
+  position:absolute; inset:0;
+  display:none; flex-direction:column; align-items:center;
+  padding: 18px 14px 10px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.screen::-webkit-scrollbar { width:3px; }
+.screen::-webkit-scrollbar-thumb { background:rgba(0,229,255,.2); border-radius:2px; }
+.screen.active { display:flex; animation: screenIn .25s ease-out; }
+
+@keyframes screenIn {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ════════════════════════════════
+   BATTLE SCREEN
+════════════════════════════════ */
+#s-battle {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,229,255,.06) 0%, transparent 70%),
+              radial-gradient(ellipse 60% 40% at 80% 80%, rgba(123,47,255,.05) 0%, transparent 60%),
+              var(--c1);
+  justify-content: center;
+}
+
+.battle-inner { width:100%; max-width:360px; display:flex; flex-direction:column; align-items:center; gap:0; }
+
+.level-badge {
+  display:flex; align-items:center; gap:14px;
+  margin-bottom:8px;
+}
+.level-nav-btn {
+  width:34px; height:34px;
+  background: var(--dim); border:1px solid var(--border);
+  border-radius:6px; color:var(--neon); font-size:.9rem;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:.2s;
+}
+.level-nav-btn:hover { background: rgba(0,229,255,.22); transform:scale(1.1); }
+.level-label {
+  font-family:var(--font-display); font-size:1.4rem; letter-spacing:4px;
+  color:var(--gold); text-shadow: 0 0 30px rgba(255,210,52,.6);
+}
+
+#level-subtitle {
+  font-size:.72rem; color:rgba(255,255,255,.35); letter-spacing:2px;
+  text-transform:uppercase; margin-bottom:28px; text-align:center;
+}
+
+.ship-orb {
+  width:180px; height:180px;
+  border-radius:50%;
+  background: radial-gradient(circle at 38% 38%, rgba(0,229,255,.18), rgba(0,0,0,.8));
+  border: 1px solid rgba(0,229,255,.25);
+  box-shadow:
+    0 0 40px rgba(0,229,255,.15),
+    0 0 80px rgba(0,229,255,.05),
+    inset 0 0 40px rgba(0,229,255,.05);
+  display:flex; align-items:center; justify-content:center;
+  font-size:5rem;
+  animation: orbitPulse 5s ease-in-out infinite;
+  position:relative;
+  margin-bottom:10px;
+}
+.ship-orb::before {
+  content:'';
+  position:absolute; inset:-8px;
+  border-radius:50%;
+  border: 1px solid rgba(0,229,255,.08);
+  animation: rotateSlow 12s linear infinite;
+}
+.ship-orb::after {
+  content:'';
+  position:absolute; inset:-20px;
+  border-radius:50%;
+  border: 1px dashed rgba(0,229,255,.05);
+  animation: rotateSlow 20s linear infinite reverse;
+}
+@keyframes orbitPulse {
+  0%,100% { transform:translateY(0) scale(1); box-shadow:0 0 40px rgba(0,229,255,.15),0 0 80px rgba(0,229,255,.05); }
+  50% { transform:translateY(-10px) scale(1.02); box-shadow:0 0 60px rgba(0,229,255,.25),0 0 100px rgba(0,229,255,.1); }
+}
+@keyframes rotateSlow { to { transform:rotate(360deg); } }
+
+.level-stats-row {
+  display:flex; gap:16px; margin:16px 0 24px;
+}
+.lstat {
+  background:rgba(0,0,0,.4); border:1px solid var(--border2);
+  border-radius:8px; padding:8px 14px; text-align:center; flex:1;
+}
+.lstat .ls-val { font-family:var(--font-display); font-size:1.1rem; color:var(--neon); }
+.lstat .ls-key { font-size:.6rem; color:rgba(255,255,255,.3); letter-spacing:1.5px; text-transform:uppercase; }
+
+.btn-play {
+  width:100%; padding:16px;
+  background: linear-gradient(135deg, var(--neon), #0099bb);
+  color:#000; border:none; border-radius:8px;
+  font-family:var(--font-display); font-size:1.15rem; letter-spacing:3px;
+  cursor:pointer; position:relative; overflow:hidden;
+  box-shadow: 0 0 30px rgba(0,229,255,.4), 0 4px 20px rgba(0,0,0,.5);
+  transition:.25s;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+.btn-play::before {
+  content:'';
+  position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
+  transition:.6s;
+}
+.btn-play:hover::before { left:100%; }
+.btn-play:hover { transform:translateY(-2px); box-shadow:0 0 50px rgba(0,229,255,.6),0 8px 30px rgba(0,0,0,.6); }
+.btn-play:active { transform:scale(.97); }
+
+/* ════════════════════════════════
+   SHOP SCREEN
+════════════════════════════════ */
+#s-shop { background:var(--c1); gap:12px; }
+
+.tab-strip {
+  display:flex; gap:6px; width:100%;
+  background:rgba(0,0,0,.4); border:1px solid var(--border2);
+  border-radius:10px; padding:4px;
+  flex-shrink:0;
+}
+.tab-btn {
+  flex:1; padding:8px 4px;
+  background:none; border:none; color:rgba(255,255,255,.35);
+  font-family:var(--font-body); font-weight:700; font-size:.65rem;
+  letter-spacing:1.5px; text-transform:uppercase;
+  border-radius:7px; cursor:pointer; transition:.2s;
+}
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--dim), rgba(0,0,0,.3));
+  color:var(--neon); border:1px solid var(--border);
+}
+
+/* Upgrades */
+.upg-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+.upg-card {
+  background: linear-gradient(145deg, rgba(5,13,24,.9), rgba(2,4,8,.9));
+  border:1px solid var(--border2);
+  border-radius:var(--r); padding:14px 12px;
+  cursor:pointer; transition:.25s; position:relative; overflow:hidden;
+  text-align:center;
+}
+.upg-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+}
+.upg-card:hover { border-color:rgba(0,229,255,.35); transform:translateY(-2px); background:linear-gradient(145deg,rgba(10,22,40,.9),rgba(5,13,24,.9)); }
+.upg-card:active { transform:scale(.97); }
+.upg-icon { font-size:2.2rem; margin-bottom:8px; display:block; }
+.upg-name { font-weight:700; font-size:.88rem; margin-bottom:3px; color:#e8f4ff; }
+.upg-level { font-size:.65rem; color:rgba(255,255,255,.3); margin-bottom:8px; letter-spacing:1px; }
+.upg-bar {
+  height:3px; background:rgba(255,255,255,.07); border-radius:2px;
+  margin-bottom:8px; overflow:hidden;
+}
+.upg-bar-fill { height:100%; background:linear-gradient(90deg,var(--neon),var(--neon2)); border-radius:2px; transition:.4s; }
+.upg-price { font-family:var(--font-display); font-size:.78rem; color:var(--gold); }
+.upg-maxed { color:var(--green); font-size:.7rem; letter-spacing:1px; }
+
+/* Crates */
+.crate-list { display:flex; flex-direction:column; gap:10px; width:100%; }
+.crate-row {
+  background:linear-gradient(145deg, rgba(5,13,24,.95), rgba(2,4,8,.95));
+  border:1px solid var(--border2);
+  border-radius:var(--r); padding:14px 16px;
+  display:flex; align-items:center; gap:14px;
+  cursor:pointer; transition:.25s; position:relative; overflow:hidden;
+}
+.crate-row::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg, transparent 60%, rgba(255,255,255,.02));
+  pointer-events:none;
+}
+.crate-row:hover { transform:translateX(4px); }
+.crate-row.cr-normal:hover  { border-color:rgba(0,255,136,.3); box-shadow:inset 4px 0 0 var(--green); }
+.crate-row.cr-premium:hover { border-color:rgba(255,210,52,.3); box-shadow:inset 4px 0 0 var(--gold); }
+.crate-row.cr-weapon:hover  { border-color:rgba(0,229,255,.3); box-shadow:inset 4px 0 0 var(--neon); }
+.crate-row.cr-armor:hover   { border-color:rgba(255,61,110,.3); box-shadow:inset 4px 0 0 var(--hot); }
+.cr-icon { font-size:2.4rem; flex-shrink:0; }
+.cr-info { flex:1; }
+.cr-name { font-weight:700; font-size:.9rem; letter-spacing:.5px; margin-bottom:2px; }
+.cr-desc { font-size:.72rem; color:rgba(255,255,255,.38); margin-bottom:6px; }
+.cr-cost { font-family:var(--font-display); font-size:.78rem; }
+.cr-cost.key-cost { color:var(--green); }
+.cr-cost.gem-cost { color:var(--neon); }
+.cr-arrow { color:rgba(255,255,255,.15); font-size:1rem; }
+
+.convert-card {
+  background:rgba(0,0,0,.3); border:1px solid rgba(255,210,52,.12);
+  border-radius:var(--r); padding:12px 16px;
+  display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; transition:.2s;
+}
+.convert-card:hover { background:rgba(255,210,52,.05); border-color:rgba(255,210,52,.3); }
+.conv-txt { font-size:.78rem; color:rgba(255,255,255,.5); }
+.conv-txt strong { color:var(--gold); }
+.conv-btn {
+  font-family:var(--font-display); font-size:.65rem; letter-spacing:1px;
+  background:rgba(255,210,52,.12); border:1px solid rgba(255,210,52,.3);
+  color:var(--gold); padding:7px 14px; border-radius:6px; cursor:pointer; transition:.2s;
+}
+.conv-btn:hover { background:rgba(255,210,52,.25); }
+
+/* Skins */
+.skin-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+.skin-tile {
+  background:linear-gradient(145deg, rgba(5,13,24,.9), rgba(2,4,8,.9));
+  border:1px solid var(--border2);
+  border-radius:var(--r); padding:16px 12px;
+  cursor:pointer; transition:.25s; text-align:center; position:relative; overflow:hidden;
+}
+.skin-tile:hover { transform:translateY(-3px); }
+.skin-tile.equipped { border-color:rgba(0,229,255,.5); box-shadow:0 0 20px rgba(0,229,255,.15); }
+.skin-tile .st-ship { font-size:2.8rem; margin-bottom:8px; display:block; }
+.skin-tile .st-name { font-weight:700; font-size:.82rem; margin-bottom:3px; }
+.skin-tile .st-bonus { font-size:.67rem; color:rgba(255,255,255,.3); margin-bottom:7px; }
+.skin-tile .st-price { font-family:var(--font-display); font-size:.75rem; }
+.skin-tile .equipped-badge {
+  position:absolute; top:6px; right:6px;
+  background:var(--neon); color:#000; font-size:.5rem;
+  padding:2px 5px; border-radius:3px; font-weight:700; letter-spacing:.5px;
+}
+
+/* ════════════════════════════════
+   HANGAR SCREEN
+════════════════════════════════ */
+#s-hangar { background:var(--c1); gap:14px; }
+
+.power-banner {
+  width:100%;
+  background: linear-gradient(135deg, rgba(123,47,255,.15), rgba(0,229,255,.08));
+  border:1px solid rgba(123,47,255,.25);
+  border-radius:var(--r); padding:14px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.pb-label { font-size:.65rem; color:rgba(255,255,255,.35); letter-spacing:2px; text-transform:uppercase; }
+.pb-val { font-family:var(--font-display); font-size:2rem; color:var(--neon); text-shadow:0 0 20px rgba(0,229,255,.5); }
+
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+.stat-box {
+  background:rgba(0,0,0,.35); border:1px solid var(--border2);
+  border-radius:8px; padding:10px 12px;
+}
+.sb-key { font-size:.62rem; color:rgba(255,255,255,.3); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px; }
+.sb-val { font-family:var(--font-display); font-size:1.1rem; color:#e8f4ff; }
+.sb-val .bonus-tag { font-size:.65rem; color:var(--green); margin-left:4px; }
+
+.section-lbl {
+  font-size:.6rem; letter-spacing:3px; color:rgba(255,255,255,.2);
+  text-transform:uppercase; align-self:flex-start;
+  border-left:2px solid var(--neon); padding-left:8px;
+}
+
+.equip-slots { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; }
+.eq-slot {
+  aspect-ratio:1; background:rgba(0,0,0,.4);
+  border:1px solid rgba(255,255,255,.06); border-radius:8px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; cursor:pointer; transition:.2s; position:relative; overflow:hidden;
+}
+.eq-slot:hover { border-color:rgba(0,229,255,.3); }
+.eq-slot .es-icon { font-size:1.5rem; }
+.eq-slot .es-name { font-size:.45rem; color:rgba(255,255,255,.3); letter-spacing:.5px; text-align:center; padding:0 2px; }
+.eq-slot.filled .es-name { color:inherit; }
+.eq-slot .rarity-dot {
+  position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
+  width:5px; height:5px; border-radius:50%;
+}
+
+#bag-scroll {
+  display:flex; gap:8px; overflow-x:auto; width:100%;
+  padding-bottom:6px; -webkit-overflow-scrolling:touch;
+}
+#bag-scroll::-webkit-scrollbar { height:2px; }
+#bag-scroll::-webkit-scrollbar-thumb { background:rgba(0,229,255,.2); }
+.bag-card {
+  min-width:88px; background:rgba(0,0,0,.45);
+  border-radius:8px; padding:10px 8px;
+  text-align:center; flex-shrink:0; cursor:pointer;
+  transition:.2s; position:relative;
+}
+.bag-card:hover { transform:translateY(-3px); }
+.bag-card .bc-icon { font-size:1.7rem; margin-bottom:4px; }
+.bag-card .bc-name { font-size:.62rem; font-weight:700; margin-bottom:2px; }
+.bag-card .bc-stat { font-size:.58rem; color:rgba(255,255,255,.35); margin-bottom:6px; }
+.eq-mini-btn {
+  font-family:var(--font-display); font-size:.52rem; letter-spacing:.5px;
+  background:var(--dim); border:1px solid var(--border); color:var(--neon);
+  padding:4px 8px; border-radius:4px; cursor:pointer; transition:.2s; width:100%;
+}
+.eq-mini-btn:hover { background:rgba(0,229,255,.25); }
+
+/* ════════════════════════════════
+   MISSIONS SCREEN
+════════════════════════════════ */
+#s-missions { background:var(--c1); gap:12px; }
+
+.miss-card {
+  width:100%; background:linear-gradient(145deg, rgba(5,13,24,.9), rgba(2,4,8,.9));
+  border:1px solid var(--border2); border-radius:var(--r); padding:14px 16px;
+  display:flex; align-items:center; gap:12px; transition:.2s;
+}
+.miss-card:hover { border-color:rgba(255,210,52,.2); }
+.mc-left { flex:1; }
+.mc-title { font-weight:700; font-size:.88rem; color:var(--gold); margin-bottom:2px; }
+.mc-desc { font-size:.72rem; color:rgba(255,255,255,.38); margin-bottom:8px; }
+.mc-progress {
+  height:4px; background:rgba(255,255,255,.07); border-radius:2px; overflow:hidden;
+}
+.mc-fill { height:100%; background:linear-gradient(90deg,var(--neon2),var(--neon)); border-radius:2px; transition:.5s; }
+.mc-pct { font-size:.6rem; color:rgba(255,255,255,.25); margin-top:4px; }
+.mc-btn {
+  font-family:var(--font-display); font-size:.6rem; letter-spacing:.5px;
+  padding:9px 12px; border-radius:6px; cursor:pointer; border:1px solid;
+  white-space:nowrap; transition:.2s; flex-shrink:0;
+}
+.mc-btn.ready { background:rgba(0,255,136,.12); border-color:rgba(0,255,136,.4); color:var(--green); }
+.mc-btn.ready:hover { background:rgba(0,255,136,.25); }
+.mc-btn.done { background:transparent; border-color:rgba(255,255,255,.08); color:rgba(255,255,255,.2); cursor:default; }
+.mc-btn.locked { background:transparent; border-color:rgba(255,255,255,.06); color:rgba(255,255,255,.15); cursor:default; }
+
+/* ════════════════════════════════
+   BOTTOM NAV
+════════════════════════════════ */
+#bot-nav {
+  height:var(--nav);
+  background: linear-gradient(0deg, rgba(2,4,8,.99), rgba(5,13,24,.97));
+  border-top:1px solid var(--border2);
+  display:flex; flex-shrink:0;
+  position:relative; z-index:50;
+}
+#bot-nav::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(0,229,255,.3), transparent);
+}
+.nav-btn {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:3px;
+  cursor:pointer; transition:.2s; position:relative;
+  border:none; background:none;
+}
+.nav-btn::after {
+  content:''; position:absolute; bottom:0; left:25%; right:25%; height:2px;
+  background:var(--neon); border-radius:2px 2px 0 0;
+  opacity:0; transition:.25s; transform:scaleX(0);
+}
+.nav-btn.active::after { opacity:1; transform:scaleX(1); }
+.nav-btn .ni { font-size:1.3rem; transition:.2s; }
+.nav-btn .nl { font-size:.52rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,.3); text-transform:uppercase; transition:.2s; }
+.nav-btn.active .ni { filter:drop-shadow(0 0 6px var(--neon)); }
+.nav-btn.active .nl { color:var(--neon); }
+
+/* ════════════════════════════════
+   PLAY SCREEN
+════════════════════════════════ */
+#play-screen {
+  position:fixed; inset:0; z-index:500; background:#000;
+}
+#game-canvas { display:block; }
+
+#hud {
+  position:absolute; top:0; left:0; right:0; z-index:600;
+  padding:10px 14px 0; pointer-events:none;
+}
+.xp-track {
+  height:5px; background:rgba(255,255,255,.06);
+  border-radius:3px; overflow:hidden; margin-bottom:7px;
+  box-shadow:0 0 8px rgba(0,229,255,.2);
+}
+#xp-fill {
+  height:100%;
+  background:linear-gradient(90deg,var(--neon2),var(--neon));
+  border-radius:3px; width:0; transition:width .3s;
+}
+.hud-row {
+  display:flex; justify-content:space-between; align-items:center;
+}
+.hud-chip {
+  background:rgba(2,4,8,.75); border:1px solid rgba(255,255,255,.08);
+  border-radius:20px; padding:4px 12px;
+  font-size:.6rem; font-weight:600; letter-spacing:1px;
+  backdrop-filter:blur(8px);
+}
+.hud-chip .hc-val { font-family:var(--font-display); font-size:.85rem; }
+.hud-chip.hp-chip .hc-val { color:var(--green); }
+.hud-chip.lv-chip .hc-val { color:var(--gold); }
+.hud-chip.wv-chip .hc-val { color:var(--neon); }
+
+#pause-btn {
+  position:absolute; top:10px; right:12px; z-index:610;
+  background:rgba(2,4,8,.8); border:1px solid var(--border);
+  color:var(--neon); width:36px; height:36px;
+  border-radius:6px; cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:.2s; pointer-events:all;
+}
+#pause-btn:hover { background:var(--dim); }
+
+/* Joystick (mobile) */
+#joystick-zone {
+  position:absolute; bottom:20px; left:20px;
+  width:100px; height:100px; z-index:620;
+  pointer-events:all; display:none;
+}
+.js-outer {
+  width:100%; height:100%; border-radius:50%;
+  background:rgba(0,229,255,.06); border:1px solid rgba(0,229,255,.2);
+  position:relative;
+}
+#js-knob {
+  width:38px; height:38px; border-radius:50%;
+  background:rgba(0,229,255,.25); border:1px solid rgba(0,229,255,.5);
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  transition:none;
+}
+
+/* Dash btn (mobile) */
+#dash-btn {
+  position:absolute; bottom:30px; right:24px; z-index:620;
+  width:58px; height:58px; border-radius:50%;
+  background:rgba(0,229,255,.12); border:2px solid rgba(0,229,255,.35);
+  color:var(--neon); font-size:.7rem; font-weight:700; letter-spacing:.5px;
+  cursor:pointer; display:none; align-items:center; justify-content:center;
+  flex-direction:column; gap:1px; pointer-events:all;
+  font-family:var(--font-display);
+}
+
+/* ════════════════════════════════
+   MODALS / OVERLAYS
+════════════════════════════════ */
+.overlay {
+  position:fixed; inset:0; z-index:1500;
+  background:rgba(0,0,0,.87);
+  display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(16px);
+}
+
+.modal {
+  background: linear-gradient(180deg, #0a1420, #060c14);
+  border:1px solid rgba(0,229,255,.2);
+  border-radius:14px; width:92%; max-width:400px;
+  padding:24px 22px; text-align:center;
+  box-shadow:0 0 80px rgba(0,229,255,.08), 0 30px 60px rgba(0,0,0,.6);
+  position:relative; overflow:hidden;
+}
+.modal::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,.5),transparent);
+}
+.modal-title {
+  font-family:var(--font-display); font-size:1.2rem; letter-spacing:3px;
+  color:var(--neon); margin-bottom:4px; text-shadow:0 0 20px rgba(0,229,255,.5);
+}
+.modal-sub { font-size:.72rem; color:rgba(255,255,255,.3); margin-bottom:18px; letter-spacing:1px; }
+
+/* Skill cards */
+.skill-list { display:flex; flex-direction:column; gap:8px; }
+.sk-card {
+  background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.06);
+  border-radius:8px; padding:12px 14px; cursor:pointer; transition:.2s; text-align:left;
+  display:flex; gap:12px; align-items:center;
+}
+.sk-card:hover { background:rgba(0,229,255,.07); border-color:rgba(0,229,255,.3); transform:translateX(3px); }
+.sk-card .sk-emoji { font-size:1.8rem; flex-shrink:0; }
+.sk-card .sk-body {}
+.sk-card .sk-tag { font-size:.6rem; color:var(--neon); font-weight:700; letter-spacing:1px; margin-bottom:2px; }
+.sk-card .sk-name { font-weight:700; font-size:.9rem; margin-bottom:2px; }
+.sk-card .sk-desc { font-size:.73rem; color:rgba(255,255,255,.38); }
+
+/* Result */
+.result-icon { font-size:4rem; margin-bottom:12px; display:block; animation:popOut .5s cubic-bezier(.175,.885,.32,1.6); }
+.result-title { font-family:var(--font-display); font-size:1.8rem; letter-spacing:4px; margin-bottom:8px; }
+.result-stats { font-size:.82rem; color:rgba(255,255,255,.45); line-height:1.8; margin-bottom:20px; }
+.result-stats strong { color:var(--gold); }
+
+/* Gacha */
+.gacha-anim { font-size:5rem; text-align:center; display:block; margin:8px auto 20px; }
+.gacha-reveal { animation:popOut .5s cubic-bezier(.175,.885,.32,1.6); }
+.item-reveal {
+  border-radius:10px; padding:18px; margin:10px 0;
+  text-align:center;
+}
+.ir-rarity { font-size:.6rem; letter-spacing:3px; font-weight:700; margin-bottom:6px; }
+.ir-icon { font-size:3.5rem; margin-bottom:8px; display:block; }
+.ir-name { font-size:1.2rem; font-weight:700; margin-bottom:4px; }
+.ir-stat { font-size:.8rem; color:rgba(255,255,255,.45); }
+.gold-reveal { color:var(--gold); font-family:var(--font-display); font-size:1.8rem; text-shadow:0 0 30px rgba(255,210,52,.6); }
+.gem-reveal  { color:var(--neon); font-family:var(--font-display); font-size:1.8rem; text-shadow:0 0 30px rgba(0,229,255,.6); }
+
+/* Admin */
+.adm-input {
+  width:100%; background:rgba(0,0,0,.5); border:1px solid var(--border2);
+  color:#fff; padding:10px 14px; border-radius:7px; margin-bottom:10px;
+  font-family:var(--font-body); font-size:.9rem; outline:none; transition:.2s;
+}
+.adm-input:focus { border-color:var(--border); }
+
+/* Generic buttons */
+.btn-primary {
+  width:100%; padding:13px;
+  background:linear-gradient(135deg,var(--neon),#0099bb);
+  color:#000; border:none; border-radius:7px;
+  font-family:var(--font-display); font-size:.95rem; letter-spacing:2px;
+  cursor:pointer; transition:.2s;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+  box-shadow:0 0 20px rgba(0,229,255,.3);
+}
+.btn-primary:hover { box-shadow:0 0 35px rgba(0,229,255,.5); transform:translateY(-1px); }
+.btn-ghost {
+  width:100%; padding:11px;
+  background:rgba(255,255,255,.04); border:1px solid var(--border2);
+  color:rgba(255,255,255,.4); border-radius:7px;
+  font-family:var(--font-display); font-size:.85rem; letter-spacing:1px;
+  cursor:pointer; transition:.2s; margin-top:8px;
+}
+.btn-ghost:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.6); }
+
+/* Toasts */
+#toasts {
+  position:fixed; top:62px; left:50%; transform:translateX(-50%);
+  z-index:9000; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+}
+.toast {
+  padding:8px 22px; border-radius:4px;
+  font-family:var(--font-display); font-size:.72rem; letter-spacing:1px;
+  clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%);
+  animation:toastIn .3s ease-out, fadeOut .3s ease-in 2.2s forwards;
+  backdrop-filter:blur(10px); white-space:nowrap;
+}
+@keyframes toastIn { from{opacity:0;transform:translateY(-15px);}to{opacity:1;transform:translateY(0);} }
+@keyframes fadeOut { to{opacity:0;transform:translateY(-8px);} }
+@keyframes popOut {
+  0%{transform:scale(.3);opacity:0;}
+  70%{transform:scale(1.1);}
+  100%{transform:scale(1);opacity:1;}
+}
+
+/* ── RARITY COLORS (used via JS style injection) ── */
+/* common=#9ca3af, rare=#00e5ff, epic=#ffd234, legendary=#ff3d6e */
+
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <button id="admin-btn" onclick="UI.showAdmin()">👑</button>
+
+  <!-- TOP BAR -->
+  <div id="top-bar">
+    <div class="res-pill keys"><span class="r-icon">🔑</span><span class="r-val" id="r-keys">5</span></div>
+    <div class="res-pill gems"><span class="r-icon">💎</span><span class="r-val" id="r-gems">0</span></div>
+    <div class="res-pill gold"><span class="r-icon">💰</span><span class="r-val" id="r-gold">0</span></div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- BATTLE -->
+    <div id="s-battle" class="screen active">
+      <div class="battle-inner">
+        <div class="level-badge">
+          <button class="level-nav-btn" onclick="G.changeLevel(-1)">◀</button>
+          <div class="level-label">BÖLÜM <span id="lv-num">1</span></div>
+          <button class="level-nav-btn" onclick="G.changeLevel(1)">▶</button>
+        </div>
+        <div id="level-subtitle">DERİN UZAY OPERASYONU</div>
+
+        <div class="ship-orb" id="ship-orb">🛸</div>
+
+        <div class="level-stats-row">
+          <div class="lstat"><div class="ls-val" id="ls-kills">75</div><div class="ls-key">Hedef</div></div>
+          <div class="lstat"><div class="ls-val" id="ls-reward">1200</div><div class="ls-key">Ödül 💰</div></div>
+          <div class="lstat"><div class="ls-val" id="ls-power">—</div><div class="ls-key">Kuvvet</div></div>
+        </div>
+
+        <button class="btn-play" onclick="G.startLevel()">⚡ SAVAŞA BAŞLA</button>
+      </div>
+    </div>
+
+    <!-- SHOP -->
+    <div id="s-shop" class="screen">
+      <div class="tab-strip" style="width:100%;flex-shrink:0;">
+        <button class="tab-btn active" onclick="UI.shopTab('upgrades',this)">GÜÇLENDİR</button>
+        <button class="tab-btn" onclick="UI.shopTab('crates',this)">KASALAR</button>
+        <button class="tab-btn" onclick="UI.shopTab('skins',this)">GÖRÜNÜM</button>
+      </div>
+
+      <div id="sp-upgrades" style="width:100%;">
+        <div class="upg-grid" id="upg-grid"></div>
+      </div>
+
+      <div id="sp-crates" class="hidden" style="width:100%;">
+        <div class="crate-list">
+          <div class="crate-row cr-normal" onclick="G.openCrate('normal')">
+            <div class="cr-icon">📦</div>
+            <div class="cr-info">
+              <div class="cr-name">TEDARİK KASASI</div>
+              <div class="cr-desc">Altın · Elmas · Ekipman · Nadiren çift ödül</div>
+              <div class="cr-cost key-cost">🔑 1 Anahtar</div>
+            </div>
+            <div class="cr-arrow">›</div>
+          </div>
+          <div class="crate-row cr-premium" onclick="G.openCrate('premium')">
+            <div class="cr-icon">🎁</div>
+            <div class="cr-info">
+              <div class="cr-name">PREMİUM KASA</div>
+              <div class="cr-desc">%25 Kostüm · %40 Ekipman · %35 Kaynak</div>
+              <div class="cr-cost gem-cost">💎 300 Elmas</div>
+            </div>
+            <div class="cr-arrow">›</div>
+          </div>
+          <div class="crate-row cr-weapon" onclick="G.openCrate('weapon')">
+            <div class="cr-icon">🗡️</div>
+            <div class="cr-info">
+              <div class="cr-name">SİLAH KASASI</div>
+              <div class="cr-desc">Garantili Silah · %10 Epik şans</div>
+              <div class="cr-cost gem-cost">💎 150 Elmas</div>
+            </div>
+            <div class="cr-arrow">›</div>
+          </div>
+          <div class="crate-row cr-armor" onclick="G.openCrate('armor')">
+            <div class="cr-icon">🛡️</div>
+            <div class="cr-info">
+              <div class="cr-name">ZIRH KASASI</div>
+              <div class="cr-desc">Garantili Zırh · %10 Epik şans</div>
+              <div class="cr-cost gem-cost">💎 150 Elmas</div>
+            </div>
+            <div class="cr-arrow">›</div>
+          </div>
+          <div class="convert-card" onclick="G.convertGems()">
+            <div class="conv-txt">💎 10 Elmas → <strong>1.000 💰 Altın</strong></div>
+            <button class="conv-btn">TAKAS</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sp-skins" class="hidden" style="width:100%;">
+        <div class="skin-grid" id="skin-grid"></div>
+      </div>
+    </div>
+
+    <!-- HANGAR -->
+    <div id="s-hangar" class="screen">
+      <div class="power-banner">
+        <div><div class="pb-label">Toplam Kuvvet</div><div class="pb-val" id="h-power">0</div></div>
+        <div style="font-size:2.5rem;opacity:.6">⚡</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="sb-key">Saldırı DMG</div><div class="sb-val" id="h-dmg">25</div></div>
+        <div class="stat-box"><div class="sb-key">Max Can HP</div><div class="sb-val" id="h-hp">100</div></div>
+        <div class="stat-box"><div class="sb-key">Kritik %</div><div class="sb-val" id="h-crit">5%</div></div>
+        <div class="stat-box"><div class="sb-key">Hız SPD</div><div class="sb-val" id="h-spd">5.0</div></div>
+      </div>
+      <div class="section-lbl">KUŞANILAN EKİPMAN</div>
+      <div class="equip-slots" id="eq-slots"></div>
+      <div class="section-lbl">ÇANTA</div>
+      <div id="bag-scroll"></div>
+    </div>
+
+    <!-- MISSIONS -->
+    <div id="s-missions" class="screen">
+      <div id="miss-list" style="width:100%;display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bot-nav">
+    <button class="nav-btn" onclick="UI.tab('shop',this)"><span class="ni">🛒</span><span class="nl">Market</span></button>
+    <button class="nav-btn" onclick="UI.tab('hangar',this)"><span class="ni">🚀</span><span class="nl">Hangar</span></button>
+    <button class="nav-btn active" onclick="UI.tab('battle',this)"><span class="ni">⚔️</span><span class="nl">Savaş</span></button>
+    <button class="nav-btn" onclick="UI.tab('missions',this)"><span class="ni">🏆</span><span class="nl">Görev</span></button>
+  </nav>
+
+  <!-- PLAY SCREEN -->
+  <div id="play-screen" class="hidden">
+    <div id="hud">
+      <div class="xp-track"><div id="xp-fill"></div></div>
+      <div class="hud-row">
+        <div class="hud-chip lv-chip">LVL <span class="hc-val" id="h-lvl">1</span></div>
+        <div class="hud-chip hp-chip">❤️ <span class="hc-val" id="h-health">100</span></div>
+        <div class="hud-chip wv-chip"><span class="hc-val" id="h-wave">0/75</span></div>
+      </div>
+    </div>
+    <canvas id="game-canvas"></canvas>
+    <button id="pause-btn" onclick="G.showMenu()">⏸</button>
+    <div id="joystick-zone"><div class="js-outer"><div id="js-knob"></div></div></div>
+    <button id="dash-btn" onclick="G.triggerDash()">DASH<br>⚡</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="m-skill" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-title">⚡ SEVİYE ATLADI</div>
+    <div class="modal-sub">Bir yetenek seç — sadece bu sefer</div>
+    <div class="skill-list" id="skill-list"></div>
+  </div>
+</div>
+
+<div id="m-result" class="overlay hidden">
+  <div class="modal">
+    <span class="result-icon" id="res-icon">🏆</span>
+    <div class="result-title" id="res-title">ZAFER</div>
+    <div class="result-stats" id="res-stats"></div>
+    <button class="btn-primary" onclick="G.showMenu()">ANA MENÜ</button>
+  </div>
+</div>
+
+<div id="m-gacha" class="overlay hidden">
+  <div class="modal">
+    <div id="gacha-content"></div>
+    <button id="gacha-close" class="btn-primary hidden" onclick="document.getElementById('m-gacha').classList.add('hidden')">TOPLA</button>
+  </div>
+</div>
+
+<div id="m-admin" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-title">🔐 SİSTEM ERİŞİMİ</div>
+    <div class="modal-sub">Yalnızca yetkili personel</div>
+    <input type="text" id="adm-user" placeholder="Kullanıcı Adı" class="adm-input">
+    <input type="password" id="adm-pass" placeholder="Şifre" class="adm-input">
+    <button class="btn-primary" onclick="G.adminLogin()">GİRİŞ YAP</button>
+    <button class="btn-ghost" onclick="document.getElementById('m-admin').classList.add('hidden')">KAPAT</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════
+   DATA — Items, Rarities, Skin DB
+═══════════════════════════════════════════ */
+const RC = {common:'#9ca3af', rare:'#00e5ff', epic:'#ffd234', legendary:'#ff3d6e'};
+const RL = {common:'STANDART', rare:'NADİR', epic:'EPİK', legendary:'EFSANE'};
+const ITEM_DB = {
+  weapon:{
+    common: [{name:'Mavi Lazer',icon:'🔫',bonus:{dmg:15}},{name:'Plazma Atıcı',icon:'⚡',bonus:{dmg:18}}],
+    rare:   [{name:'Neon Kanon',icon:'🔮',bonus:{dmg:38}},{name:'Foton Topu',icon:'💠',bonus:{dmg:42}}],
+    epic:   [{name:'Kozmik Yıkıcı',icon:'☄️',bonus:{dmg:75}},{name:'Yıldız Parçalayıcı',icon:'🌟',bonus:{dmg:85}}],
+    legendary:[{name:'ÇEKİRDEK-X',icon:'💥',bonus:{dmg:130}}]
+  },
+  armor:{
+    common: [{name:'Çelik Gövde',icon:'🛡️',bonus:{hp:60}},{name:'Nano Plaka',icon:'🔩',bonus:{hp:75}}],
+    rare:   [{name:'Titan Zırhı',icon:'🪖',bonus:{hp:150}},{name:'Fırtına Kalkan',icon:'🌀',bonus:{hp:170}}],
+    epic:   [{name:'Aegis Sistemi',icon:'💎',bonus:{hp:300}},{name:'Void Zırhı',icon:'🌈',bonus:{hp:330}}],
+    legendary:[{name:'TANRI KALKANI',icon:'🌌',bonus:{hp:500}}]
+  }
+};
+const SKINS = [
+  {id:'default', name:'Neon Blue',    emoji:'🛸',color:'#00e5ff',price:0,    bonus:{hp:0,  dmg:0,  spd:0}},
+  {id:'crimson', name:'Crimson Fury', emoji:'🚀',color:'#ff3d6e',price:2000, bonus:{hp:0,  dmg:15, spd:0}},
+  {id:'jade',    name:'Jade Guardian',emoji:'🛩️',color:'#00ff88',price:2500, bonus:{hp:100,dmg:0,  spd:0}},
+  {id:'golden',  name:'Golden Swift', emoji:'✈️',color:'#ffd234',price:3000, bonus:{hp:0,  dmg:0,  spd:2}},
+  {id:'phantom', name:'Phantom Void', emoji:'🔮',color:'#7b2fff',price:4000, bonus:{hp:50, dmg:10, spd:1}},
+  {id:'shadow',  name:'Shadow Strike',emoji:'🦅',color:'#ff6b35',price:5500, bonus:{hp:0,  dmg:25, spd:2}}
+];
+
+function rollRarity(pool) {
+  const r=Math.random();
+  if(pool==='legendary' && r<.02) return 'legendary';
+  if(pool==='premium')  return r<.06?'epic':r<.35?'rare':'common';
+  if(pool==='weapon'||pool==='armor') return r<.1?'epic':r<.45?'rare':'common';
+  return r<.03?'epic':r<.20?'rare':'common';
+}
+function makeItem(slot,rarity){
+  const pool=ITEM_DB[slot][rarity]||ITEM_DB[slot].common;
+  const t=pool[Math.floor(Math.random()*pool.length)];
+  return {id:'i'+Date.now()+Math.random().toString(36).slice(2,5),type:slot,name:t.name,icon:t.icon,rarity,bonus:{...t.bonus}};
+}
+
+/* ═══════════════════════════════════════════
+   SAVE / LOAD
+═══════════════════════════════════════════ */
+const SAVE_KEY='vs_10';
+function defaultSave(){return{
+  gold:0,gems:0,keys:5,
+  unlockedLevels:1,selectedLevel:1,
+  upgrades:{hp:0,dmg:0,speed:0,crit:0},
+  purchasedSkins:['default'],equippedSkin:'default',
+  inventory:[],equipped:{weapon:null,armor:null},
+  missions:{kills:0,gamesPlayed:0,goldEarned:0,equipsUsed:0,claimed:{m1:0,m2:0,m3:0,m4:0}}
+};}
+let D = (()=>{ try{ const v=localStorage.getItem(SAVE_KEY); return v?JSON.parse(v):defaultSave(); }catch(e){return defaultSave();} })();
+function saveData(){ try{localStorage.setItem(SAVE_KEY,JSON.stringify(D));}catch(e){} }
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+function toast(msg,color='#00e5ff',textColor='#000'){
+  const c=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className='toast';
+  t.style.background=color;t.style.color=textColor;
+  t.innerText=msg;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),2600);
+}
+
+/* ═══════════════════════════════════════════
+   UI CONTROLLER
+═══════════════════════════════════════════ */
+const UI = {
+  activeTab:'battle',
+  activeShopTab:'upgrades',
+
+  tab(id,btn){
+    this.activeTab=id;
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('s-'+id).classList.add('active');
+    if(btn)btn.classList.add('active');
+    this.refresh();
+  },
+
+  shopTab(id,btn){
+    this.activeShopTab=id;
+    document.querySelectorAll('#sp-upgrades,#sp-crates,#sp-skins').forEach(e=>e.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('sp-'+id).classList.remove('hidden');
+    if(btn)btn.classList.add('active');
+    if(id==='skins') this.renderSkins();
+  },
+
+  refresh(){
+    const fmt=v=>v>999999?'∞':v.toLocaleString('tr');
+    document.getElementById('r-gold').innerText=fmt(D.gold);
+    document.getElementById('r-gems').innerText=fmt(D.gems);
+    document.getElementById('r-keys').innerText=fmt(D.keys);
+
+    // Battle screen stats
+    const s=calcStats();
+    document.getElementById('lv-num').innerText=D.selectedLevel;
+    document.getElementById('ls-kills').innerText=50+D.selectedLevel*25;
+    document.getElementById('ls-reward').innerText=((D.selectedLevel*1200)).toLocaleString('tr');
+    document.getElementById('ls-power').innerText=s.power;
+
+    // Hangar
+    document.getElementById('h-power').innerText=s.power;
+    document.getElementById('h-dmg').innerText=s.eqDmg>0?`${s.dmg} <span class="bonus-tag">+${s.eqDmg}</span>`:s.dmg;
+    document.getElementById('h-hp').innerText=s.eqHp>0?`${s.hp} <span class="bonus-tag">+${s.eqHp}</span>`:s.hp;
+    document.getElementById('h-crit').innerText=`${s.crit}%`;
+    document.getElementById('h-spd').innerText=s.spd.toFixed(1);
+
+    // Hangar — re-render inner HTML for bonus tags
+    ['h-dmg','h-hp'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.innerHTML=el.innerText; // already set above with HTML
+    });
+    document.getElementById('h-dmg').innerHTML = s.eqDmg>0?`${s.dmg}<span class="bonus-tag">+${s.eqDmg}</span>`:s.dmg;
+    document.getElementById('h-hp').innerHTML  = s.eqHp>0 ?`${s.hp}<span class="bonus-tag">+${s.eqHp}</span>`:s.hp;
+
+    // Ship orb skin
+    const skin=SKINS.find(s=>s.id===D.equippedSkin)||SKINS[0];
+    document.getElementById('ship-orb').innerText=skin.emoji;
+    document.getElementById('ship-orb').style.boxShadow=`0 0 40px ${skin.color}33,0 0 80px ${skin.color}11,inset 0 0 40px ${skin.color}0a`;
+
+    this.renderUpgrades();
+    this.renderEquipSlots();
+    this.renderBag();
+    this.renderMissions();
+  },
+
+  renderUpgrades(){
+    const UPGRADES=[
+      {key:'hp',  icon:'❤️',name:'Max Sağlık',  base:500},
+      {key:'dmg', icon:'🔥',name:'Hasar',        base:750},
+      {key:'speed',icon:'⚡',name:'Çeviklik',    base:400},
+      {key:'crit',icon:'🎯',name:'Kritik Vuruş', base:1000}
+    ];
+    const g=document.getElementById('upg-grid');
+    if(!g)return;
+    g.innerHTML='';
+    UPGRADES.forEach(u=>{
+      const lv=D.upgrades[u.key]||0;
+      const maxed=lv>=5;
+      const price=maxed?0:u.base*(lv+1);
+      const pct=lv/5*100;
+      const d=document.createElement('div');
+      d.className='upg-card';
+      d.innerHTML=`
+        <span class="upg-icon">${u.icon}</span>
+        <div class="upg-name">${u.name}</div>
+        <div class="upg-level">SEVİYE ${lv}/5</div>
+        <div class="upg-bar"><div class="upg-bar-fill" style="width:${pct}%"></div></div>
+        ${maxed?`<div class="upg-maxed">✓ MAKSİMUM</div>`:`<div class="upg-price">💰 ${price.toLocaleString('tr')}</div>`}
+      `;
+      if(!maxed) d.onclick=()=>G.buyUpgrade(u.key,u.base);
+      g.appendChild(d);
+    });
+  },
+
+  renderSkins(){
+    const g=document.getElementById('skin-grid');
+    if(!g)return;
+    g.innerHTML='';
+    SKINS.forEach(skin=>{
+      const owned=D.purchasedSkins.includes(skin.id);
+      const eq=D.equippedSkin===skin.id;
+      const bonus=skin.bonus.dmg?`+${skin.bonus.dmg} DMG`:skin.bonus.hp?`+${skin.bonus.hp} HP`:skin.bonus.spd?`+${skin.bonus.spd} SPD`:'—';
+      const d=document.createElement('div');
+      d.className='skin-tile'+(eq?' equipped':'');
+      d.style.borderColor=eq?skin.color+'88':'rgba(255,255,255,.06)';
+      if(eq) d.style.boxShadow=`0 0 20px ${skin.color}22`;
+      d.innerHTML=`
+        ${eq?`<div class="equipped-badge">ON</div>`:''}
+        <span class="st-ship" style="filter:drop-shadow(0 0 8px ${skin.color})">${skin.emoji}</span>
+        <div class="st-name">${skin.name}</div>
+        <div class="st-bonus">${bonus}</div>
+        ${eq?`<div class="st-price" style="color:${skin.color}">KUŞANILDI</div>`:
+          owned?`<div class="st-price" style="color:#00ff88">KUŞAN</div>`:
+          `<div class="st-price" style="color:#ffd234">💰 ${skin.price.toLocaleString('tr')}</div>`}
+      `;
+      d.onclick=()=>G.handleSkin(skin);
+      g.appendChild(d);
+    });
+  },
+
+  renderEquipSlots(){
+    const c=document.getElementById('eq-slots');
+    if(!c)return;
+    c.innerHTML='';
+    ['weapon','armor','weapon2','armor2'].forEach((slot,i)=>{
+      const realSlot=i<2?slot:null;
+      const item=realSlot?D.equipped[realSlot]:null;
+      const d=document.createElement('div');
+      d.className='eq-slot'+(item?' filled':'');
+      if(item){
+        const col=RC[item.rarity]||'#9ca3af';
+        d.style.borderColor=col+'66';
+        d.style.boxShadow=`0 0 10px ${col}22`;
+        d.innerHTML=`<div class="es-icon">${item.icon}</div><div class="es-name" style="color:${col}">${item.name.slice(0,7)}</div><div class="rarity-dot" style="background:${col}"></div>`;
+        d.title=`${item.name} — çıkarmak için tıkla`;
+        d.onclick=()=>{G.unequip(realSlot);};
+      } else if(realSlot){
+        const e=realSlot==='weapon'?'🗡️':'🛡️';
+        d.innerHTML=`<div class="es-icon" style="opacity:.18">${e}</div><div class="es-name">${realSlot==='weapon'?'SİLAH':'ZIRH'}</div>`;
+      } else {
+        d.innerHTML=`<div class="es-icon" style="opacity:.08">🔒</div><div class="es-name">KİLİTLİ</div>`;
+        d.style.opacity='.4';
+      }
+      c.appendChild(d);
+    });
+  },
+
+  renderBag(){
+    const c=document.getElementById('bag-scroll');
+    if(!c)return;
+    if(D.inventory.length===0){
+      c.innerHTML='<p style="color:rgba(255,255,255,.2);font-size:.75rem;padding:10px 0;">Çanta boş — kasalardan ekipman aç!</p>';
+      return;
+    }
+    c.innerHTML='';
+    D.inventory.forEach(item=>{
+      const col=RC[item.rarity]||'#9ca3af';
+      const stat=item.bonus.dmg?`+${item.bonus.dmg} DMG`:`+${item.bonus.hp} HP`;
+      const card=document.createElement('div');
+      card.className='bag-card';
+      card.style.border=`1px solid ${col}33`;
+      card.innerHTML=`<div class="bc-icon">${item.icon}</div><div class="bc-name" style="color:${col}">${item.name}</div><div class="bc-stat">${stat}</div><button class="eq-mini-btn">KUŞAN</button>`;
+      card.querySelector('.eq-mini-btn').onclick=(e)=>{e.stopPropagation();G.equip(item);};
+      c.appendChild(card);
+    });
+  },
+
+  renderMissions(){
+    const c=document.getElementById('miss-list');
+    if(!c)return;
+    c.innerHTML='';
+    const MISS=[
+      {id:'m1',title:'Uzay Avcısı',  desc:'50 düşman yok et',        cur:()=>D.missions.kills,      goal:50,   ri:'💎',ra:30},
+      {id:'m2',title:'Veteran',       desc:'5 oyun tamamla',           cur:()=>D.missions.gamesPlayed,goal:5,    ri:'🔑',ra:3},
+      {id:'m3',title:'Hazine Avcısı', desc:'5.000 altın kazan',        cur:()=>D.missions.goldEarned, goal:5000, ri:'💰',ra:2500},
+      {id:'m4',title:'Koleksiyoner',  desc:'3 farklı ekipman kuşan',   cur:()=>D.missions.equipsUsed||0,goal:3,  ri:'💎',ra:100}
+    ];
+    MISS.forEach(m=>{
+      const cur=m.cur(), pct=Math.min(100,cur/m.goal*100);
+      const done=cur>=m.goal, claimed=D.missions.claimed[m.id];
+      let btnCls,btnTxt;
+      if(claimed){btnCls='done';btnTxt='ALINDI ✓';}
+      else if(done){btnCls='ready';btnTxt=`AL ${m.ri}${m.ra}`;}
+      else{btnCls='locked';btnTxt=`%${Math.floor(pct)}`;}
+      const d=document.createElement('div');
+      d.className='miss-card';
+      d.innerHTML=`<div class="mc-left"><div class="mc-title">${m.title}</div><div class="mc-desc">${m.desc} (${Math.min(cur,m.goal)}/${m.goal})</div><div class="mc-progress"><div class="mc-fill" style="width:${pct}%"></div></div><div class="mc-pct">%${Math.floor(pct)} tamamlandı</div></div><button class="mc-btn ${btnCls}">${btnTxt}</button>`;
+      if(done&&!claimed) d.querySelector('.mc-btn').onclick=()=>G.claimMission(m.id,m.ri,m.ra);
+      c.appendChild(d);
+    });
+  },
+
+  showAdmin(){
+    document.getElementById('m-admin').classList.remove('hidden');
+  }
+};
+
+/* ═══════════════════════════════════════════
+   STATS CALCULATOR
+═══════════════════════════════════════════ */
+function calcStats(){
+  const skin=SKINS.find(s=>s.id===D.equippedSkin)||SKINS[0];
+  const eqDmg=D.equipped.weapon?D.equipped.weapon.bonus.dmg||0:0;
+  const eqHp =D.equipped.armor ?D.equipped.armor.bonus.hp ||0:0;
+  const dmg=25+D.upgrades.dmg*10+skin.bonus.dmg+eqDmg;
+  const hp =100+D.upgrades.hp*50+skin.bonus.hp +eqHp;
+  const spd=5  +D.upgrades.speed*.8+skin.bonus.spd;
+  const crit=5 +D.upgrades.crit*3;
+  const power=Math.floor(dmg*2+hp/2+spd*5+crit*3);
+  return {dmg,hp,spd,crit,power,eqDmg,eqHp,skin};
+}
+
+/* ═══════════════════════════════════════════
+   GAME CONTROLLER  G
+═══════════════════════════════════════════ */
+const G = {
+  changeLevel(d){
+    D.selectedLevel=Math.max(1,Math.min(D.unlockedLevels,D.selectedLevel+d));
+    saveData();UI.refresh();
+  },
+
+  buyUpgrade(key,base){
+    const lv=D.upgrades[key]||0;
+    if(lv>=5){toast('Maksimum Seviye!','#ffd234','#000');return;}
+    const price=base*(lv+1);
+    if(D.gold<price){toast('Yetersiz Altın 💰','#ff3d6e','#fff');return;}
+    D.gold-=price; D.upgrades[key]++;
+    saveData(); UI.refresh();
+    toast(`✓ ${['Max Sağlık','Hasar','Çeviklik','Kritik Vuruş'][['hp','dmg','speed','crit'].indexOf(key)]} Sv.${D.upgrades[key]}`,'#00ff88','#000');
+  },
+
+  handleSkin(skin){
+    if(D.purchasedSkins.includes(skin.id)){
+      D.equippedSkin=skin.id; saveData(); UI.refresh(); UI.renderSkins();
+      toast(`${skin.emoji} ${skin.name} Kuşatıldı`,skin.color,'#000');
+    } else if(D.gold>=skin.price){
+      D.gold-=skin.price; D.purchasedSkins.push(skin.id);
+      D.equippedSkin=skin.id; saveData(); UI.refresh(); UI.renderSkins();
+      toast(`${skin.emoji} ${skin.name} Satın Alındı`,skin.color,'#000');
+    } else { toast('Yetersiz Altın 💰','#ff3d6e','#fff'); }
+  },
+
+  equip(item){
+    if(D.equipped[item.type]) D.inventory.push(D.equipped[item.type]);
+    D.equipped[item.type]=item;
+    D.inventory=D.inventory.filter(i=>i.id!==item.id);
+    D.missions.equipsUsed=(D.missions.equipsUsed||0)+1;
+    saveData(); UI.refresh();
+    toast(`${item.icon} ${item.name} Kuşanıldı`,'#00ff88','#000');
+  },
+
+  unequip(slot){
+    if(!D.equipped[slot])return;
+    D.inventory.push(D.equipped[slot]);
+    D.equipped[slot]=null;
+    saveData(); UI.refresh();
+    toast('Ekipman çıkarıldı','#9ca3af','#000');
+  },
+
+  claimMission(id,icon,amount){
+    if(D.missions.claimed[id])return;
+    D.missions.claimed[id]=1;
+    if(icon==='💰')D.gold+=amount;
+    if(icon==='💎')D.gems+=amount;
+    if(icon==='🔑')D.keys+=amount;
+    saveData();UI.refresh();
+    toast(`✓ Ödül alındı: ${amount}${icon}`,'#00ff88','#000');
+  },
+
+  convertGems(){
+    if(D.gems<10){toast('Yetersiz Elmas 💎','#ff3d6e','#fff');return;}
+    D.gems-=10; D.gold+=1000;
+    saveData();UI.refresh();
+    toast('💱 10 💎 → 1.000 💰','#ffd234','#000');
+  },
+
+  /* ── GACHA ── */
+  openCrate(type){
+    if(type==='normal'   && D.keys<1)   {toast('Yetersiz Anahtar 🔑','#ff3d6e','#fff');return;}
+    if(type==='premium'  && D.gems<300) {toast('Yetersiz Elmas 💎','#ff3d6e','#fff');return;}
+    if((type==='weapon'||type==='armor')&&D.gems<150){toast('Yetersiz Elmas 💎','#ff3d6e','#fff');return;}
+
+    if(type==='normal')  D.keys--;
+    if(type==='premium') D.gems-=300;
+    if(type==='weapon'||type==='armor') D.gems-=150;
+    saveData(); UI.refresh();
+
+    const modal=document.getElementById('m-gacha');
+    const content=document.getElementById('gacha-content');
+    const closeBtn=document.getElementById('gacha-close');
+    const icons={normal:'📦',premium:'🎁',weapon:'🗡️',armor:'🛡️'};
+
+    modal.classList.remove('hidden');
+    content.innerHTML=`<div class="gacha-anim" style="animation:shake .4s infinite">${icons[type]||'📦'}</div>`;
+    closeBtn.classList.add('hidden');
+
+    setTimeout(()=>{
+      const reward=this._rollReward(type);
+      this._applyReward(reward);
+      saveData(); UI.refresh();
+
+      content.innerHTML=`<div class="gacha-reveal">${this._buildRewardHTML(reward)}</div>`;
+      closeBtn.classList.remove('hidden');
+    },1500);
+  },
+
+  _rollReward(type){
+    const r=Math.random();
+    if(type==='weapon'||type==='armor'){
+      const rar=rollRarity(type);
+      return {kind:'item',item:makeItem(type,rar)};
+    }
+    if(type==='normal'){
+      if(r<.50) return {kind:'gold',amount:400+Math.floor(Math.random()*600)};
+      if(r<.72) return {kind:'gold',amount:1200+Math.floor(Math.random()*800)};
+      if(r<.87) return {kind:'gems', amount:20+Math.floor(Math.random()*60)};
+      if(r<.96){const s=Math.random()<.5?'weapon':'armor';return {kind:'item',item:makeItem(s,rollRarity('normal'))};}
+      // %4 double
+      return {kind:'double',item1:makeItem('weapon',rollRarity('normal')),item2:makeItem('armor',rollRarity('normal'))};
+    }
+    // premium
+    if(r<.35){const s=Math.random()<.5?'weapon':'armor';return {kind:'item',item:makeItem(s,rollRarity('premium'))};}
+    if(r<.60){
+      const unowned=SKINS.filter(s=>!D.purchasedSkins.includes(s.id));
+      if(unowned.length>0){const ns=unowned[Math.floor(Math.random()*unowned.length)];return {kind:'skin',skin:ns};}
+      return {kind:'gems',amount:800};
+    }
+    if(r<.80) return {kind:'gems',amount:300+Math.floor(Math.random()*400)};
+    return {kind:'gold',amount:5000+Math.floor(Math.random()*5000)};
+  },
+
+  _applyReward(reward){
+    if(reward.kind==='gold') D.gold+=reward.amount;
+    if(reward.kind==='gems') D.gems+=reward.amount;
+    if(reward.kind==='item') D.inventory.push(reward.item);
+    if(reward.kind==='double'){D.inventory.push(reward.item1,reward.item2);}
+    if(reward.kind==='skin' && !D.purchasedSkins.includes(reward.skin.id)){D.purchasedSkins.push(reward.skin.id);}
+  },
+
+  _buildRewardHTML(reward){
+    const bigNum=(n,col)=>`<div style="font-size:3.5rem;margin:6px 0">💰</div><div class="gold-reveal" style="color:${col};text-shadow:0 0 30px ${col}66">+${n.toLocaleString('tr')}</div>`;
+    if(reward.kind==='gold') return `<div style="text-align:center;padding:10px">${bigNum(reward.amount,'#ffd234')}<div style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:6px;letter-spacing:2px">ALTIN</div></div>`;
+    if(reward.kind==='gems') return `<div style="text-align:center;padding:10px"><div style="font-size:3.5rem;margin:6px 0">💎</div><div class="gem-reveal">+${reward.amount}</div><div style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:6px;letter-spacing:2px">ELMAS</div></div>`;
+    if(reward.kind==='skin'){const s=reward.skin;return `<div style="text-align:center;padding:10px"><div style="font-size:.65rem;letter-spacing:3px;color:#ffd234;margin-bottom:8px">✦ YENİ KOSTÜM ✦</div><div style="font-size:4rem;filter:drop-shadow(0 0 20px ${s.color})">${s.emoji}</div><div style="font-family:var(--font-display);font-size:1.3rem;color:${s.color};text-shadow:0 0 20px ${s.color}66;margin:8px 0">${s.name}</div></div>`;}
+    if(reward.kind==='item') return this._itemCard(reward.item,false);
+    if(reward.kind==='double') return `<div style="text-align:center;margin-bottom:10px"><div style="font-size:.65rem;letter-spacing:3px;color:#ffd234">✦ ÇİFT ÖDÜL ✦</div></div><div style="display:flex;gap:10px">${this._itemCard(reward.item1,true)}${this._itemCard(reward.item2,true)}</div>`;
+    return '';
+  },
+
+  _itemCard(item,compact){
+    const col=RC[item.rarity]||'#9ca3af';
+    const stat=item.bonus.dmg?`+${item.bonus.dmg} DMG`:`+${item.bonus.hp} HP`;
+    if(compact) return `<div style="flex:1;background:rgba(0,0,0,.5);border:1px solid ${col}55;border-radius:8px;padding:12px;text-align:center"><div style="font-size:2rem;margin-bottom:4px">${item.icon}</div><div style="font-size:.6rem;color:${col};letter-spacing:2px;font-weight:700">${RL[item.rarity]}</div><div style="font-size:.82rem;font-weight:700;color:#fff;margin:3px 0">${item.name}</div><div style="font-size:.7rem;color:rgba(255,255,255,.35)">${stat}</div></div>`;
+    return `<div style="background:rgba(0,0,0,.5);border:2px solid ${col}66;border-radius:10px;padding:18px;text-align:center;box-shadow:0 0 30px ${col}22"><div style="font-size:.6rem;letter-spacing:3px;color:${col};font-weight:700;margin-bottom:8px">${RL[item.rarity]} ${item.type==='weapon'?'SİLAH':'ZIRH'}</div><div style="font-size:3.5rem;margin-bottom:8px">${item.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;color:${col};text-shadow:0 0 15px ${col}66;margin-bottom:6px">${item.name}</div><div style="font-size:.82rem;color:rgba(255,255,255,.4)">${stat}</div></div>`;
+  },
+
+  adminLogin(){
+    const u=document.getElementById('adm-user').value;
+    const p=document.getElementById('adm-pass').value;
+    if(u==='halilokuklu'&&p==='20050866Ff.'){
+      SKINS.forEach(s=>{if(!D.purchasedSkins.includes(s.id))D.purchasedSkins.push(s.id);});
+      D.unlockedLevels=10; D.gold=999999999; D.gems=999999999; D.keys=999;
+      saveData(); UI.refresh();
+      document.getElementById('m-admin').classList.add('hidden');
+      toast('👑 SİSTEME ERİŞİLDİ — TÜM KİLİTLER AÇIK','#ffd234','#000');
+    } else { toast('❌ ERİŞİM REDDEDİLDİ','#ff3d6e','#fff'); }
+  },
+
+  /* ════════════════════════════════
+     GAME ENGINE
+  ════════════════════════════════ */
+  startLevel(){
+    document.getElementById('main').classList.add('hidden');
+    document.getElementById('bot-nav').classList.add('hidden');
+    document.getElementById('play-screen').classList.remove('hidden');
+    this._initGame();
+  },
+
+  showMenu(){
+    document.getElementById('play-screen').classList.add('hidden');
+    document.getElementById('m-result').classList.add('hidden');
+    document.getElementById('m-skill').classList.add('hidden');
+    document.getElementById('main').classList.remove('hidden');
+    document.getElementById('bot-nav').classList.remove('hidden');
+    this.state='MENU';
+    UI.refresh();
+  },
+
+  triggerDash(){
+    if(this.player&&this.player.stamina>=30&&this.player.dashCD===0){
+      this.player.dashPending=true;
+    }
+  },
+
+  _initGame(){
+    const canvas=document.getElementById('game-canvas');
+    const W=window.innerWidth, H=window.innerHeight;
+    canvas.width=W; canvas.height=H;
+    this.W=W; this.H=H;
+    this.ctx=canvas.getContext('2d');
+
+    const s=calcStats();
+    this.player={
+      x:W/2, y:H/2, r:22,
+      color:s.skin.color, emoji:s.skin.emoji,
+      hp:s.hp, maxHp:s.hp,
+      dmg:s.dmg, crit:s.crit, spd:s.spd,
+      xp:0, xpReq:70, lvl:1,
+      iFrames:0, stamina:100, dashCD:0, dashPending:false,
+      bullets:[],
+      skills:{blaster:1,bomb:0,orbit:0,iceLaser:0,fireBomb:0},
+      passive:{dmgUp:0,cdRed:0,spdUp:0,magnet:0,regen:0},
+      lastFire:{blaster:0,bomb:0,iceLaser:0,fireBomb:0}
+    };
+    this.enemies=[]; this.loots=[]; this.exps=[]; this.orbs=[];
+    this.fTexts=[]; this.parts=[]; this.stars=[];
+    this.shake=0; this.bgOff=0;
+    this.waveKills=0; this.killGoal=50+D.selectedLevel*25;
+    this.bossSpawned=false; this.boss=null; this.victoryDone=false;
+    this.lastSpawn=0; this.state='PLAYING';
+
+    for(let i=0;i<200;i++) this.stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.5,spd:Math.random()*1.2+.3,a:Math.random()*.6+.3});
+
+    // Controls
+    this._keys={};
+    this._keydown=(e)=>this._keys[e.code]=true;
+    this._keyup=(e)=>delete this._keys[e.code];
+    window.addEventListener('keydown',this._keydown);
+    window.addEventListener('keyup',this._keyup);
+
+    // Mobile
+    const isMobile='ontouchstart' in window;
+    if(isMobile){
+      document.getElementById('joystick-zone').style.display='block';
+      document.getElementById('dash-btn').style.display='flex';
+      this._setupJoystick();
+    }
+
+    this._raf=requestAnimationFrame(()=>this._loop());
+  },
+
+  _setupJoystick(){
+    const zone=document.getElementById('joystick-zone');
+    const knob=document.getElementById('js-knob');
+    this._joy={dx:0,dy:0,active:false};
+    const getCenter=()=>{const r=zone.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};};
+    zone.addEventListener('touchstart',e=>{e.preventDefault();this._joy.active=true;},{passive:false});
+    zone.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      const c=getCenter(),t=e.touches[0];
+      const dx=t.clientX-c.x,dy=t.clientY-c.y;
+      const dist=Math.hypot(dx,dy),maxR=40;
+      const cx=dist>maxR?dx/dist*maxR:dx,cy=dist>maxR?dy/dist*maxR:dy;
+      knob.style.transform=`translate(calc(-50% + ${cx}px), calc(-50% + ${cy}px))`;
+      this._joy.dx=cx/maxR; this._joy.dy=cy/maxR;
+    },{passive:false});
+    zone.addEventListener('touchend',()=>{
+      this._joy.active=false;this._joy.dx=0;this._joy.dy=0;
+      knob.style.transform='translate(-50%,-50%)';
+    });
+  },
+
+  _loop(){
+    if(this.state==='PLAYING'||this.state==='LEVELUP'){
+      this._update();
+      this._draw();
+    } else if(this.state==='RESULT'){
+      this._draw();
+    }
+    if(this.state!=='MENU'){
+      this._raf=requestAnimationFrame(()=>this._loop());
+    } else {
+      window.removeEventListener('keydown',this._keydown);
+      window.removeEventListener('keyup',this._keyup);
+    }
+  },
+
+  _update(){
+    if(this.state==='LEVELUP') return;
+    const p=this.player;
+    const now=Date.now();
+
+    // Stars
+    this.stars.forEach(s=>{s.y+=s.spd;if(s.y>this.H){s.y=0;s.x=Math.random()*this.W;}});
+
+    // iFrames
+    if(p.iFrames>0)p.iFrames--;
+    if(p.stamina<100)p.stamina+=.45;
+    if(p.dashCD>0)p.dashCD--;
+
+    // Regen
+    if(p.passive.regen>0&&now%60<2) p.hp=Math.min(p.maxHp,p.hp+p.passive.regen*.6);
+
+    // Dash
+    p.isDash=false;
+    if((this._keys['Space']||this._keys['ShiftLeft']||p.dashPending)&&p.stamina>=30&&p.dashCD===0){
+      p.isDash=true; p.stamina-=30; p.dashCD=26; p.iFrames+=13; p.dashPending=false;
+      this.shake=6; this._particles(p.x,p.y,p.color,14);
+    }
+
+    // Movement
+    const spd=p.isDash?p.spd*4.2:p.spd*(1+p.passive.spdUp*.1);
+    if(this._keys['ArrowLeft']||this._keys['KeyA'])p.x-=spd;
+    if(this._keys['ArrowRight']||this._keys['KeyD'])p.x+=spd;
+    if(this._keys['ArrowUp']||this._keys['KeyW'])p.y-=spd;
+    if(this._keys['ArrowDown']||this._keys['KeyS'])p.y+=spd;
+    if(this._joy&&this._joy.active){p.x+=this._joy.dx*spd;p.y+=this._joy.dy*spd;}
+    p.x=Math.max(28,Math.min(this.W-28,p.x));
+    p.y=Math.max(28,Math.min(this.H-28,p.y));
+
+    // Weapons
+    this._processWeapons(now);
+    this._processOrbits();
+
+    // Bullets
+    for(let i=p.bullets.length-1;i>=0;i--){
+      const b=p.bullets[i];
+      b.x+=b.vx||0; b.y+=b.vy||-17;
+      if(b.y<-100||b.y>this.H+100||b.x<-100||b.x>this.W+100){p.bullets.splice(i,1);continue;}
+      if(b.type==='BOMB'||b.type==='FIRE'){
+        let hit=false;
+        for(let j=0;j<this.enemies.length;j++){
+          const e=this.enemies[j];
+          if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+16){
+            this._explosion(b.x,b.y,b.lv,b.type);
+            p.bullets.splice(i,1);hit=true;break;
+          }
+        }
+        if(!hit&&(b.type==='BOMB')&&b.age){b.age--;if(b.age<=0){this._explosion(b.x,b.y,b.lv,'NORMAL');p.bullets.splice(i,1);}}
+      }
+    }
+
+    // Explosions
+    for(let i=this.exps.length-1;i>=0;i--){
+      const ex=this.exps[i]; ex.r+=9;
+      const mx=80+(ex.lv||1)*20;
+      if(ex.r>mx){this.exps.splice(i,1);continue;}
+      this.enemies.forEach(e=>{
+        if(Math.hypot(e.x-ex.x,e.y-ex.y)<ex.r){
+          e.hp-=1.6;
+          if(ex.type==='FIRE'){e.burn=70;e.flash=3;}
+        }
+      });
+    }
+
+    // Particles
+    for(let i=this.parts.length-1;i>=0;i--){
+      const p2=this.parts[i];
+      p2.x+=p2.vx;p2.y+=p2.vy;p2.vx*=.91;p2.vy*=.91;p2.life--;
+      if(p2.life<=0)this.parts.splice(i,1);
+    }
+
+    // Boss spawn
+    if(!this.bossSpawned&&this.waveKills>=this.killGoal&&this.state==='PLAYING'){
+      this._spawnBoss();this.bossSpawned=true;
+    }
+    this._spawnEnemy(now);
+
+    // Enemies
+    for(let ei=this.enemies.length-1;ei>=0;ei--){
+      const e=this.enemies[ei];
+      if(e.flash>0)e.flash--;
+      e.spd=e.freeze>0?e.baseSpd*.35:e.baseSpd;
+      if(e.freeze>0)e.freeze--;
+      if(e.burn>0){e.burn--;if(e.burn%8===0){e.hp-=13;this._particles(e.x,e.y,'#ff6600',2);}}
+
+      // Boss phase 2
+      if(e.isBoss&&e.hp<e.maxHp*.5&&e.phase===1){e.phase=2;e.baseSpd*=1.5;toast('⚠️ BOSS KIZGINLAŞABİLİR!','#ff3d6e','#fff');}
+
+      // Move
+      if(!e.laserFire){
+        const ang=Math.atan2(p.y-e.y,p.x-e.x);
+        e.x+=Math.cos(ang)*e.spd;e.y+=Math.sin(ang)*e.spd;
+      }
+
+      // Boss attacks
+      if(e.isBoss){
+        if(e.laserWarn>0){
+          e.laserWarn--;
+          e.ltx+=(p.x-e.ltx)*.07;e.lty+=(p.y-e.lty)*.07;
+          if(e.laserWarn<=0){e.laserFire=e.phase===2?30:20;this.shake=35;}
+        } else if(e.laserFire>0){
+          e.laserFire--;
+          const dist=Math.abs((e.lty-e.y)*p.x-(e.ltx-e.x)*p.y+e.ltx*e.y-e.lty*e.x)/Math.hypot(e.lty-e.y,e.ltx-e.x);
+          if(dist<48&&p.iFrames<=0){p.hp-=e.phase===2?85:55;p.iFrames=18;this.shake+=18;}
+        } else if(now-e.lastAtk>2400){
+          if(Math.random()>.35){e.laserWarn=50;e.ltx=p.x;e.lty=p.y;}
+          else this._explosion(e.x,e.y,3);
+          e.lastAtk=now;
+        }
+      }
+
+      // Bullet hits
+      for(let bi=p.bullets.length-1;bi>=0;bi--){
+        const b=p.bullets[bi];
+        if(b.type==='BOMB'||b.type==='FIRE')continue;
+        if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+8){
+          const crit=Math.random()*100<p.crit;
+          const fd=crit?b.dmg*2.2:b.dmg;
+          e.hp-=fd; e.flash=5;
+          if(b.type==='ICE')e.freeze=55;
+          this.fTexts.push({x:e.x+(Math.random()*14-7),y:e.y-16,t:Math.floor(fd),a:1,col:crit?'#ffd234':'#ffffff',big:crit});
+          p.bullets.splice(bi,1);
+        }
+      }
+
+      // Death
+      if(e.hp<=0){
+        this._particles(e.x,e.y,e.isBoss?'#ffd234':'#ff3d6e',e.isBoss?140:22);
+        if(e.isBoss){
+          for(let k=0;k<20;k++)this._spawnLoot(e.x+(Math.random()*130-65),e.y+(Math.random()*130-65),true);
+          this._explosion(e.x,e.y,7);this.boss=null;
+        } else {
+          this._spawnLoot(e.x,e.y);
+          this.waveKills++;D.missions.kills++;
+        }
+        this.enemies.splice(ei,1);continue;
+      }
+
+      // Player hit
+      if(p.iFrames<=0&&Math.hypot(e.x-p.x,e.y-p.y)<e.r+p.r-4){
+        p.hp-=e.isBoss?48:13;
+        this.shake=e.isBoss?28:12; p.iFrames=28;
+        this._particles(p.x,p.y,'#ff3d6e',7);
+      }
+    }
+
+    // Loots
+    const magR=p.r+55+p.passive.magnet*55;
+    for(let li=this.loots.length-1;li>=0;li--){
+      const l=this.loots[li];
+      if(Math.hypot(l.x-p.x,l.y-p.y)<magR){
+        l.x+=(p.x-l.x)*.13;l.y+=(p.y-l.y)*.13;
+        if(Math.hypot(l.x-p.x,l.y-p.y)<p.r+6){
+          if(l.type==='GOLD'){D.gold+=25;D.missions.goldEarned+=25;}
+          if(l.type==='GEMS')D.gems+=1;
+          if(l.type==='XP'){p.xp+=32;if(p.xp>=p.xpReq){p.xp-=p.xpReq;this._showSkillModal();}}
+          this.loots.splice(li,1);
+        }
+      } else l.y+=.35;
+      if(l.y>this.H+80)this.loots.splice(li,1);
+    }
+
+    // Floating texts
+    for(let i=this.fTexts.length-1;i>=0;i--){
+      const ft=this.fTexts[i];ft.y-=1.3;ft.a-=.016;
+      if(ft.a<=0)this.fTexts.splice(i,1);
+    }
+
+    // Victory
+    if(this.bossSpawned&&!this.boss&&this.state==='PLAYING'&&!this.victoryDone&&this.enemies.length===0){
+      this.victoryDone=true;this.bossSpawned=false;
+      setTimeout(()=>{if(this.state==='PLAYING')this._victory();},1200);
+    }
+
+    if(p.hp<=0&&this.state==='PLAYING')this._gameOver();
+  },
+
+  _processWeapons(now){
+    const p=this.player;
+    const cdM=1-p.passive.cdRed*.1;
+    const dmgM=1+p.passive.dmgUp*.2;
+    const dmg=p.dmg*dmgM;
+    const fire=(key,cd,fn)=>{if(p.skills[key]>0&&now-p.lastFire[key]>cd*cdM){fn(p.skills[key],dmg);p.lastFire[key]=now;}};
+    fire('blaster',p.skills.blaster>=5?200:360,(lv,d)=>this._fireBlaster(lv,d));
+    fire('bomb',2000,(lv,d)=>this._fireBomb(lv,d*2.8));
+    fire('iceLaser',480,(lv,d)=>this._fireIce(lv,d*.85));
+    fire('fireBomb',1800,(lv,d)=>this._fireFire(lv,d*1.7));
+  },
+
+  _fireBlaster(lv,dmg){
+    const p=this.player,px=p.x,py=p.y-30,s=-17;
+    const shots=[[0,s],...(lv>=2?[[-12,s],[12,s]]:[]),...(lv>=3?[[-22,s-2,-.3],[22,s-2,.3]]:[]),...(lv>=4?[[-32,s+3,-5.5],[32,s+3,5.5]]:[]),...(lv>=5?[[-2,s-4,-.1],[2,s-4,.1]]:[])];
+    shots.forEach(([ox,vy,vx=0])=>p.bullets.push({x:px+ox,y:py,dmg,vx,vy}));
+  },
+  _fireBomb(lv,dmg){
+    const p=this.player;
+    for(let i=0;i<Math.min(lv,4);i++){
+      const t=this.enemies.length>0?this.enemies[Math.floor(Math.random()*this.enemies.length)]:{x:p.x,y:p.y-300};
+      const a=Math.atan2(t.y-p.y,t.x-p.x);
+      p.bullets.push({x:p.x,y:p.y-20,dmg,vx:Math.cos(a)*11,vy:Math.sin(a)*11,type:'BOMB',lv,age:120});
+    }
+  },
+  _fireIce(lv,dmg){
+    const p=this.player,px=p.x,py=p.y-30,n=Math.min(lv,5);
+    for(let i=0;i<n;i++) p.bullets.push({x:px+(i*16-Math.floor(n/2)*16),y:py,dmg,vx:(Math.random()-.5)*2,vy:-19,type:'ICE'});
+  },
+  _fireFire(lv,dmg){
+    if(!this.enemies.length)return;
+    const t=this.enemies.reduce((b,e)=>Math.hypot(e.x-this.player.x,e.y-this.player.y)<Math.hypot(b.x-this.player.x,b.y-this.player.y)?e:b,this.enemies[0]);
+    const a=Math.atan2(t.y-this.player.y,t.x-this.player.x);
+    this.player.bullets.push({x:this.player.x,y:this.player.y-20,dmg,vx:Math.cos(a)*13,vy:Math.sin(a)*13,type:'FIRE',lv});
+  },
+
+  _processOrbits(){
+    const p=this.player;
+    if(!p.skills.orbit)return;
+    const lv=p.skills.orbit,dmg=p.dmg*(1+p.passive.dmgUp*.2)*1.6;
+    if(this.orbs.length!==lv)this.orbs=Array.from({length:lv},(_,i)=>({a:(Math.PI*2/lv)*i}));
+    this.orbs.forEach(orb=>{
+      orb.a+=.058+lv*.012;
+      orb.x=p.x+Math.cos(orb.a)*88;orb.y=p.y+Math.sin(orb.a)*88;
+      this.enemies.forEach(e=>{
+        if(Math.hypot(e.x-orb.x,e.y-orb.y)<e.r+12&&(!e.lastOrb||Date.now()-e.lastOrb>350)){
+          e.hp-=dmg;e.lastOrb=Date.now();
+          const pa=Math.atan2(e.y-orb.y,e.x-orb.x);
+          e.x+=Math.cos(pa)*16;e.y+=Math.sin(pa)*16;
+          this.fTexts.push({x:e.x,y:e.y-16,t:Math.floor(dmg),a:1,col:'#00ff88',big:false});
+        }
+      });
+    });
+  },
+
+  _spawnBoss(){
+    const sc=1+D.selectedLevel*.8;
+    this.boss={x:this.W/2,y:-120,r:52,baseSpd:.65,spd:.65,hp:700*sc,maxHp:700*sc,isBoss:true,lastAtk:0,laserWarn:0,laserFire:0,ltx:0,lty:0,phase:1,flash:0,burn:0,freeze:0,lastOrb:0};
+    this.enemies.push(this.boss);this.shake=45;
+  },
+
+  _spawnEnemy(now){
+    if(now-this.lastSpawn<(this.bossSpawned?1400:380))return;
+    this.lastSpawn=now;
+    const maxE=this.bossSpawned?3:11+Math.floor(this.waveKills/7)+D.selectedLevel*3;
+    if(this.enemies.length>=maxE)return;
+    const side=Math.floor(Math.random()*4),m=75;
+    let ex,ey;
+    if(side===0){ex=Math.random()*this.W;ey=-m;}
+    else if(side===1){ex=this.W+m;ey=Math.random()*this.H;}
+    else if(side===2){ex=Math.random()*this.W;ey=this.H+m;}
+    else{ex=-m;ey=Math.random()*this.H;}
+    const sc=1+D.selectedLevel*.4+this.waveKills*.013;
+    const spd=.75+Math.random()*1.8+D.selectedLevel*.09;
+    this.enemies.push({x:ex,y:ey,r:17+Math.random()*7,baseSpd:spd,spd,hp:11*sc,maxHp:11*sc,lastOrb:0,flash:0,freeze:0,burn:0});
+  },
+
+  _spawnLoot(x,y,boss=false){
+    const r=Math.random();
+    const type=boss?(r>.45?'GOLD':r>.15?'XP':'GEMS'):(r>.65?'GOLD':r>.93?'GEMS':'XP');
+    this.loots.push({x,y,type});
+  },
+
+  _explosion(x,y,lv,type='NORMAL'){
+    this.exps.push({x,y,r:0,lv:lv||1,type});this.shake=8;
+  },
+
+  _particles(x,y,col,n){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2,s=Math.random()*7+2;
+      this.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,r:Math.random()*3.5+1.5,life:Math.random()*28+12});
+    }
+  },
+
+  _showSkillModal(){
+    this.state='LEVELUP';
+    this.player.lvl++;this.player.xpReq=70*this.player.lvl;
+    const modal=document.getElementById('m-skill');
+    const list=document.getElementById('skill-list');
+    modal.classList.remove('hidden');list.innerHTML='';
+    const ALL=[
+      {id:'blaster',type:'a',emoji:'⚡',name:'Lazer Topu',     desc:'İleri atış sayısını artırır, max 5 saldırı.',max:5},
+      {id:'bomb',   type:'a',emoji:'💣',name:'Yıldız Bombası', desc:'Düşmana güdümlü patlayıcı atar.',max:5},
+      {id:'orbit',  type:'a',emoji:'🌀',name:'Kalkan Uydusu',  desc:'Etrafında dönen hasarlı uydular.',max:5},
+      {id:'iceLaser',type:'a',emoji:'❄️',name:'Buz Lazeri',    desc:'Düşmanları dondurur, hız -%65.',max:5},
+      {id:'fireBomb',type:'a',emoji:'☄️',name:'Alev Bombası',  desc:'Hedefi yakarak sürekli hasar verir.',max:5},
+      {id:'dmgUp',  type:'p',emoji:'🔥',name:'Güç Jeneratörü', desc:'Tüm silah hasarı +%20.',max:5},
+      {id:'cdRed',  type:'p',emoji:'🔋',name:'Soğutucu',       desc:'Silah bekleme -%10.',max:5},
+      {id:'spdUp',  type:'p',emoji:'👟',name:'Motor Boost',    desc:'Hareket hızı +%10.',max:5},
+      {id:'magnet', type:'p',emoji:'🧲',name:'Mıknatıs',       desc:'Loot çekim alanı büyür.',max:5},
+      {id:'regen',  type:'p',emoji:'💚',name:'Nanbot Onarıcı', desc:'Yavaş can yenileme.',max:5},
+      {id:'heal',   type:'i',emoji:'🏥',name:'Acil Tamir',     desc:'Max canın %50\'sini anında yenile.',max:99}
+    ];
+    const avail=ALL.filter(s=>{
+      const p=this.player;
+      if(s.type==='a')return p.skills[s.id]<s.max;
+      if(s.type==='p')return p.passive[s.id]<s.max;
+      return true;
+    });
+    avail.sort(()=>Math.random()-.5);
+    avail.slice(0,3).forEach(sk=>{
+      const p=this.player;
+      const cur=sk.type==='a'?p.skills[sk.id]:sk.type==='p'?p.passive[sk.id]:0;
+      const tag=sk.type==='i'?'TEK KULLANIMLIK':cur===0?'✦ YENİ':` SV.${cur}→${cur+1}`;
+      const d=document.createElement('div');
+      d.className='sk-card';
+      d.innerHTML=`<div class="sk-emoji">${sk.emoji}</div><div class="sk-body"><div class="sk-tag">${tag}</div><div class="sk-name">${sk.name}</div><div class="sk-desc">${sk.desc}</div></div>`;
+      d.onclick=()=>{
+        if(sk.type==='a')p.skills[sk.id]++;
+        if(sk.type==='p')p.passive[sk.id]++;
+        if(sk.type==='i')p.hp=Math.min(p.maxHp,p.hp+p.maxHp*.5);
+        modal.classList.add('hidden');this.state='PLAYING';
+        toast(`${sk.emoji} ${sk.name} seçildi`,'#00ff88','#000');
+      };
+      list.appendChild(d);
+    });
+  },
+
+  _victory(){
+    this.state='RESULT';
+    D.missions.gamesPlayed++;
+    const earned=D.selectedLevel*1200+Math.floor(this.waveKills*12);
+    D.gold+=earned; D.missions.goldEarned+=earned;
+    const keys=Math.ceil(D.selectedLevel/2);
+    D.keys+=keys;
+    if(D.selectedLevel===D.unlockedLevels&&D.unlockedLevels<10){D.unlockedLevels++;D.selectedLevel=D.unlockedLevels;}
+    saveData();
+    document.getElementById('res-icon').innerText='🏆';
+    document.getElementById('res-title').style.color='#00ff88';
+    document.getElementById('res-title').innerText='ZAFER!';
+    document.getElementById('res-stats').innerHTML=`Kazanılan Altın: <strong>+${earned.toLocaleString('tr')} 💰</strong><br>Bonus Anahtar: <strong>+${keys} 🔑</strong><br>Öldürülen Düşman: <strong>${this.waveKills}</strong>`;
+    document.getElementById('m-result').classList.remove('hidden');
+  },
+
+  _gameOver(){
+    this.state='RESULT';
+    D.missions.gamesPlayed++;saveData();
+    document.getElementById('res-icon').innerText='💀';
+    document.getElementById('res-title').style.color='#ff3d6e';
+    document.getElementById('res-title').innerText='ELENDİN';
+    document.getElementById('res-stats').innerHTML=`Ulaşılan Dalga: <strong>${this.waveKills}/${this.killGoal}</strong><br>Kalan Can: <strong>0 ❤️</strong>`;
+    document.getElementById('m-result').classList.remove('hidden');
+  },
+
+  /* ═══════════════════
+     DRAW
+  ═══════════════════ */
+  _draw(){
+    if(!this.ctx)return;
+    const ctx=this.ctx,p=this.player,W=this.W,H=this.H;
+
+    // Background
+    ctx.fillStyle='rgba(2,4,8,.48)';
+    ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(0,229,255,.042)';ctx.lineWidth=1;
+    this.bgOff=(this.bgOff||0)+.7;if(this.bgOff>50)this.bgOff=0;
+    ctx.beginPath();
+    for(let x=0;x<W;x+=50){ctx.moveTo(x,0);ctx.lineTo(x,H);}
+    for(let y=this.bgOff;y<H;y+=50){ctx.moveTo(0,y);ctx.lineTo(W,y);}
+    ctx.stroke();
+
+    // Stars
+    this.stars.forEach(s=>{ctx.globalAlpha=s.a;ctx.fillStyle='#e8f4ff';ctx.fillRect(s.x,s.y,s.r,s.r);});
+    ctx.globalAlpha=1;
+
+    if(this.state!=='PLAYING'&&this.state!=='LEVELUP')return;
+
+    ctx.save();
+    if(this.shake>0){ctx.translate(Math.random()*this.shake*.8,Math.random()*this.shake*.8);this.shake*=.8;}
+
+    // Orbs
+    this.orbs.forEach(orb=>{
+      ctx.shadowBlur=14;ctx.shadowColor='#00e5ff';ctx.fillStyle='#00e5ff';
+      ctx.beginPath();ctx.arc(orb.x,orb.y,7,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;
+    });
+
+    // Bullets
+    p.bullets.forEach(b=>{
+      if(b.type==='BOMB'){ctx.font='18px serif';ctx.fillText('💣',b.x-9,b.y+9);}
+      else if(b.type==='FIRE'){ctx.font='18px serif';ctx.fillText('☄️',b.x-9,b.y+9);}
+      else if(b.type==='ICE'){
+        ctx.shadowBlur=8;ctx.shadowColor='#00e5ff';ctx.fillStyle='#00e5ff';
+        ctx.fillRect(b.x-2,b.y,4,13);ctx.shadowBlur=0;
+      } else {
+        ctx.shadowBlur=6;ctx.shadowColor='#ffffff';ctx.fillStyle='#ffffff';
+        ctx.fillRect(b.x-2,b.y,4,14);ctx.shadowBlur=0;
+      }
+    });
+
+    // Explosions
+    this.exps.forEach(ex=>{
+      const mx=80+(ex.lv||1)*20,a=Math.max(0,1-ex.r/mx);
+      const grad=ctx.createRadialGradient(ex.x,ex.y,0,ex.x,ex.y,ex.r);
+      const col=ex.type==='FIRE'?`rgba(255,150,0,${a*.6})`:`rgba(255,60,0,${a*.6})`;
+      grad.addColorStop(0,col);grad.addColorStop(1,'transparent');
+      ctx.fillStyle=grad;ctx.beginPath();ctx.arc(ex.x,ex.y,ex.r,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle=ex.type==='FIRE'?`rgba(255,200,0,${a})`:`rgba(255,80,0,${a})`;
+      ctx.lineWidth=4;ctx.shadowBlur=15;ctx.shadowColor=ctx.strokeStyle;ctx.stroke();ctx.shadowBlur=0;
+    });
+
+    // Particles
+    this.parts.forEach(pt=>{
+      ctx.globalAlpha=Math.max(0,pt.life/40);ctx.fillStyle=pt.col;
+      ctx.fillRect(pt.x-pt.r/2,pt.y-pt.r/2,pt.r,pt.r);
+    });ctx.globalAlpha=1;
+
+    // Enemies
+    this.enemies.forEach(e=>{
+      ctx.filter=e.flash>0?'brightness(300%) saturate(0%)':'none';
+      ctx.shadowBlur=e.isBoss?(e.phase===2?35:20):0;
+      ctx.shadowColor=e.isBoss?(e.phase===2?'#ff6600':'#ff3d6e'):'transparent';
+
+      if(e.isBoss){
+        ctx.font='66px serif';ctx.fillText('👹',e.x-33,e.y+24);
+        ctx.filter='none';ctx.shadowBlur=0;
+        // HP
+        ctx.fillStyle='rgba(0,0,0,.75)';ctx.fillRect(e.x-46,e.y-72,92,10);
+        const hpCol=e.hp>e.maxHp*.5?'#ff3d6e':'#ff0000';
+        ctx.fillStyle=hpCol;ctx.fillRect(e.x-46,e.y-72,(e.hp/e.maxHp)*92,10);
+        // Phase indicator
+        if(e.phase===2){ctx.fillStyle='#ff6600';ctx.font='bold 10px sans-serif';ctx.fillText('⚡ FRENZY',e.x-20,e.y-76);}
+        // Laser
+        if(e.laserWarn>0){
+          ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.ltx,e.lty);
+          ctx.strokeStyle=`rgba(255,50,0,${.2+.8*(1-e.laserWarn/50)})`;
+          ctx.lineWidth=2;ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);
+        } else if(e.laserFire>0){
+          const a=Math.atan2(e.lty-e.y,e.ltx-e.x);
+          ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+Math.cos(a)*2200,e.y+Math.sin(a)*2200);
+          ctx.strokeStyle='rgba(255,0,0,.92)';ctx.lineWidth=44;ctx.shadowBlur=60;ctx.shadowColor='#ff3d6e';ctx.stroke();
+          ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+Math.cos(a)*2200,e.y+Math.sin(a)*2200);
+          ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=16;ctx.shadowBlur=0;ctx.stroke();
+        }
+      } else {
+        if(e.freeze>0)ctx.filter='hue-rotate(180deg) brightness(140%)';
+        ctx.font='30px serif';ctx.fillText('👾',e.x-15,e.y+11);
+        ctx.filter='none';ctx.shadowBlur=0;
+        // Mini hp
+        const bw=e.r*2.2;
+        ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(e.x-e.r,e.y+e.r+3,bw,3);
+        ctx.fillStyle='#ff3d6e';ctx.fillRect(e.x-e.r,e.y+e.r+3,(e.hp/e.maxHp)*bw,3);
+      }
+      ctx.filter='none';ctx.shadowBlur=0;
+    });
+
+    // Loots
+    const LI={GOLD:'💰',XP:'✨',GEMS:'💎'};
+    ctx.font='19px serif';
+    this.loots.forEach(l=>ctx.fillText(LI[l.type]||'✨',l.x-9,l.y+9));
+
+    // Player
+    ctx.shadowBlur=p.isDash?32:20;ctx.shadowColor=p.color;
+    if(p.iFrames>0&&Math.floor(Date.now()/75)%2===0)ctx.globalAlpha=.35;
+    ctx.font='38px serif';ctx.fillText(p.emoji,p.x-19,p.y+14);
+    ctx.globalAlpha=1;ctx.shadowBlur=0;
+
+    // HP bar (under player)
+    ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(p.x-32,p.y+30,64,6);
+    const hpW=(p.hp/p.maxHp)*64;
+    ctx.fillStyle=p.hp>p.maxHp*.5?'#00ff88':p.hp>p.maxHp*.25?'#ffd234':'#ff3d6e';
+    ctx.fillRect(p.x-32,p.y+30,Math.max(0,hpW),6);
+    // Stamina bar
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(p.x-32,p.y+38,64,3);
+    ctx.fillStyle='#00e5ff';ctx.fillRect(p.x-32,p.y+38,Math.max(0,(p.stamina/100)*64),3);
+
+    // Floating texts
+    this.fTexts.forEach(ft=>{
+      ctx.globalAlpha=Math.max(0,ft.a);
+      ctx.fillStyle=ft.col;ctx.shadowBlur=4;ctx.shadowColor=ft.col;
+      ctx.font=ft.big?'bold 22px Black Han Sans,sans-serif':'bold 15px Exo 2,sans-serif';
+      ctx.fillText(ft.t,ft.x,ft.y);
+    });
+    ctx.globalAlpha=1;ctx.shadowBlur=0;
+
+    ctx.restore();
+
+    // Vignette on low HP
+    if(p.hp<p.maxHp*.3){
+      const pulse=Math.abs(Math.sin(Date.now()/175))*.3;
+      ctx.fillStyle=`rgba(255,0,0,${.07+pulse})`;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    // HUD update
+    const xpEl=document.getElementById('xp-fill');
+    if(xpEl)xpEl.style.width=(p.xp/p.xpReq*100)+'%';
+    const hh=document.getElementById('h-health');if(hh)hh.innerText=Math.max(0,Math.floor(p.hp));
+    const hl=document.getElementById('h-lvl');if(hl)hl.innerText=p.lvl;
+    const hw=document.getElementById('h-wave');if(hw)hw.innerText=`${this.waveKills}/${this.killGoal}`;
+  }
+};
+
+/* ═══════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════ */
+window.addEventListener('resize',()=>{
+  const c=document.getElementById('game-canvas');
+  if(c&&G.state&&G.state!=='MENU'){c.width=window.innerWidth;c.height=window.innerHeight;G.W=c.width;G.H=c.height;}
+});
+
+UI.refresh();
+</script>
+</body>
+</html>
